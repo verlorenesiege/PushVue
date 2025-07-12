@@ -1,12 +1,17 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "service-worker/serviceWorker.ts", "/node_modules/vite-plugin-pwa/client.d.ts"],
   "exclude": ["src/**/__tests__/*"],
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+     "lib": [
+      "ESNext",
+      "DOM",
+      "es2015",
+      "webworker"
+    ]
   }
 }
