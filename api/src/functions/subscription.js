@@ -1,6 +1,6 @@
 const { app } = require('@azure/functions');
 
-const { NotificationHubsClient,  createAppleInstallation } = require ("@azure/notification-hubs")
+const { NotificationHubsClient,  createTagExpression  } = require ("@azure/notification-hubs")
 
 const CONNECT_STRING = 'Endpoint=sb://SampleNameSpase.servicebus.windows.net/;SharedAccessKeyName=DefaultFullSharedAccessSignature;SharedAccessKey=4lYZKMd5THs9u8sC4I0nlGQqXObZyWZG/mOI+DoWgSU='
 const HUB_NAME= 'SampleHub1'
@@ -15,29 +15,49 @@ app.http('subscription', {
         const reqJson = await request.json()
         console.log(reqJson)
         try {
-            console.log("NotificationHubsClient success")
             const userId = reqJson.userId
             const subscription = reqJson.subscription
-
-            // Web Push (ブラウザ) のための登録オブジェクトを作成
-            const registration = {
-                // endpoint, p256dh, authはブラウザから取得したPushSubscriptionのキー
-                endpoint: subscription.endpoint,
-                p256dh: subscription.keys.p256dh,
-                auth: subscription.keys.auth,
-                tags: [`user:${userId}`], // ユーザーIDなどでタグ付け
+            const browserInstallation = {
+                platform: "browser",
+                installationId: Buffer.from(subscription.endpoint).toString("base64"),
+                pushChannel: {
+                    endpoint: subscription.endpoint,
+                    p256dh: subscription.keys.p256dh,
+                    auth: subscription.keys.auth,
+                },
+                tags: [`user:${userId}`],
+                userId: userId,
             }
-            console.log("registration ----------------------------------------------")
-            console.log(registration)
-            // 登録を作成または更新
-            const result = await client.createOrUpdateRegistration({
-                // 登録IDはendpointを元に一意に生成するのが一般的
-                registrationId: Buffer.from(subscription.endpoint).toString("base64"),
-                body: registration,
-            });
-            console.log("✅ デバイスの登録に成功:", result.registrationId);
-            res.status(200).json({ status: "success", registrationId: result.registrationId });
-            return { status:200, body: { status: "success", registrationId: result.registrationId }}
+            const result =  await client.createOrUpdateInstallation(browserInstallation)
+            console.log("result -----------------------------------------------------------------------")
+            console.log(result)
+ 
+            const resultInstallation = await client.getInstallation(browserInstallation.installationId)
+            console.log("resultInstallation -----------------------------------------------------------------------")
+            console.log(resultInstallation)
+
+            //const tagExpression = `$UserId:${userId}`
+            const tags = ["UserId", "userId"];
+            const tagExpression = createTagExpression(tags);
+
+            console.log(tagExpression)
+            
+            const sendResult = await client.sendNotification(
+                {
+                    platform: "browser",
+                    body:"登録完了",
+                    contentType: "text/plain;charset=utf-8",
+                },
+                {
+                    tagExpression: tagExpression
+                }
+            )
+            console.log("sendResult -----------------------------------------------------------------------")
+            console.log(sendResult)
+ 
+            console.log("createOrUpdateInstallation success :")
+            //console.log(result);
+            return { status:200, body: { status: "success", correlationId: result.correlationId }}
         } catch (error) {
             console.log("NotificationHubsClient error")
             console.log(error)
