@@ -75,7 +75,7 @@ const text = ref("")
       const p256dh = btoa((String.fromCharCode.apply(null, Array.from(new Uint8Array(subscription.getKey('p256dh')!)))).replace(/\+/g, '-').replace(/\//g, '_'))
       const auth = btoa((String.fromCharCode.apply(null, Array.from(new Uint8Array(subscription.getKey('auth')!)))).replace(/\+/g, '-').replace(/\//g, '_'))
       let data:any = {
-          user: "miya",
+          userId: "miya",
           subscription: {
               endpoint: endpoint,
               expirationTime: null,
